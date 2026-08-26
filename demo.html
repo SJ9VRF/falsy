@@ -1,0 +1,146 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IAV Interactive Demo</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#070b16;--panel:#11182b;--line:#283452;--text:#f6f8fc;--muted:#9fb0cf;--violet:#b57cff;--cyan:#56d8ff;--green:#35de87;--orange:#ff9a63}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#070b16,#090f1c);color:var(--text);font:16px/1.6 Inter,system-ui,Arial,sans-serif}
+.wrap{max-width:980px;margin:auto;padding:28px}
+a{color:inherit}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:24px}
+.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}
+h1{font-size:44px;letter-spacing:-.04em;margin:.1em 0}.muted{color:var(--muted)}
+.badge{display:inline-block;padding:7px 10px;border-radius:999px;background:#141d33;border:1px solid #304162;color:#d4def2;margin-right:8px}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.btn{padding:12px 16px;border-radius:14px;border:1px solid #314463;background:#0f1628;color:#fff;font-weight:700;cursor:pointer}
+.btn.primary{background:linear-gradient(90deg,#5f6cff,#c15cff);border:none}
+.log{background:#0c1222;border:1px solid #263450;border-radius:18px;padding:18px;min-height:320px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#dce5f5;white-space:pre-wrap}
+.state{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px}
+.pill{padding:10px 12px;border-radius:16px;background:#0c1222;border:1px solid #253451}
+.ok{color:var(--green)}.bad{color:var(--orange)}.hl{color:var(--cyan)}
+@media(max-width:860px){.grid{grid-template-columns:1fr}h1{font-size:34px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p><a href="index.html">← Back to project page</a></p>
+  <div class="grid">
+    <div class="card">
+      <div class="badge">Interactive demo</div>
+      <div class="badge">No backend</div>
+      <h1>Run one IAV episode</h1>
+      <p class="muted">This toy demo mirrors the project’s core idea: the candidate looks correct on the original task. The verifier must choose a counterfactual test to tell whether the behavior is faithful or shortcut-based.</p>
+      <div class="state">
+        <div class="pill"><strong>Observed task</strong><br><span id="taskView">a=4, b=3, c=2, d=1, e=5</span></div>
+        <div class="pill"><strong>Observed outcome</strong><br><span id="obsView" class="ok">PASS</span></div>
+        <div class="pill"><strong>Hidden candidate</strong><br><span id="candHint">unknown</span></div>
+      </div>
+      <div class="btns">
+        <button class="btn" onclick="newEpisode()">New candidate</button>
+        <button class="btn" onclick="runOutcome()">Outcome-only</button>
+        <button class="btn primary" onclick="runIAV()">Run IAV</button>
+      </div>
+      <div class="btns">
+        <button class="btn" onclick="applyTest(0)">Test c + 2</button>
+        <button class="btn" onclick="applyTest(1)">Test all + 1</button>
+        <button class="btn" onclick="applyTest(2)">Test e + 2</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">Trace</h2>
+      <div id="log" class="log"></div>
+    </div>
+  </div>
+</div>
+<script>
+const candidates = [
+  {name:"faithful", type:"faithful"},
+  {name:"memorize", type:"memorize"},
+  {name:"ignore c", type:"ignore_c"},
+  {name:"conditional shortcut", type:"conditional"}
+];
+let current = null;
+const base = {a:4,b:3,c:2,d:1,e:5};
+const tests = [
+  {name:"c + 2", delta:{a:0,b:0,c:2,d:0,e:0}},
+  {name:"all + 1", delta:{a:1,b:1,c:1,d:1,e:1}},
+  {name:"e + 2", delta:{a:0,b:0,c:0,d:0,e:2}}
+];
+function target(v){ return 2*(((v.a+v.b)*v.c-v.d)+v.e); }
+function runCandidate(cand, state, observedOnly=false){
+  const obs = target(base);
+  if(cand.type==="faithful") return target(state);
+  if(cand.type==="memorize") return obs;
+  if(cand.type==="ignore_c"){ let s={...state,c:base.c}; return target(s); }
+  if(cand.type==="conditional"){
+    if(state.c >= base.c + 2 && state.e !== base.e){ let s={...state,e:base.e}; return target(s); }
+    return target(state);
+  }
+  return target(state);
+}
+function fmtState(s){ return `a=${s.a}, b=${s.b}, c=${s.c}, d=${s.d}, e=${s.e}`; }
+function addLog(msg){ const box=document.getElementById("log"); box.textContent += msg + "\n"; box.scrollTop = box.scrollHeight; }
+function clearLog(){ document.getElementById("log").textContent = ""; }
+function newEpisode(){
+  current = candidates[Math.floor(Math.random()*candidates.length)];
+  document.getElementById("candHint").textContent = "unknown";
+  document.getElementById("taskView").textContent = fmtState(base);
+  document.getElementById("obsView").textContent = "PASS";
+  clearLog();
+  addLog("> New episode");
+  addLog("> Candidate appears correct on the observed task.");
+  addLog("> Hidden type: " + current.name + " (revealed only after testing)");
+}
+function runOutcome(){
+  addLog("\nOutcome-only verifier:");
+  addLog("  Observed task = PASS");
+  addLog("  Decision = ACCEPT");
+  addLog("  Limitation: this cannot distinguish faithful behavior from a shortcut that happens to succeed here.");
+}
+function applyDelta(st, delta){
+  return {a:st.a+delta.a,b:st.b+delta.b,c:st.c+delta.c,d:st.d+delta.d,e:st.e+delta.e};
+}
+function applyTest(idx){
+  const t = tests[idx];
+  const s = applyDelta(base, t.delta);
+  const pred = runCandidate(current, s);
+  const gold = target(s);
+  const pass = pred === gold;
+  addLog(`\nManual test: ${t.name}`);
+  addLog(`  Counterfactual task = ${fmtState(s)}`);
+  addLog(`  Candidate = ${pred}, gold = ${gold}`);
+  addLog(`  Result = ${pass ? "PASS" : "FAIL"}`);
+}
+function runIAV(){
+  addLog("\nIAV verifier:");
+  addLog("  1) Hypothesize: faithful vs memorize vs ignored-variable vs conditional shortcut");
+  // simple adaptive policy
+  const first = tests[1]; // all + 1
+  const s1 = applyDelta(base, first.delta);
+  let pred = runCandidate(current, s1), gold = target(s1), pass = pred===gold;
+  addLog(`  2) Test '${first.name}' → ${pass ? "PASS" : "FAIL"}`);
+  if(!pass){
+    document.getElementById("candHint").innerHTML = '<span class="bad">'+current.name+'</span>';
+    addLog("  3) Falsified quickly. Decision = REJECT");
+    return;
+  }
+  const second = tests[0]; // c + 2
+  const s2 = applyDelta(base, second.delta);
+  pred = runCandidate(current, s2); gold = target(s2); pass = pred===gold;
+  addLog(`  3) Test '${second.name}' → ${pass ? "PASS" : "FAIL"}`);
+  if(!pass){
+    document.getElementById("candHint").innerHTML = '<span class="bad">'+current.name+'</span>';
+    addLog("  4) Shortcut exposed under a discriminative intervention. Decision = REJECT");
+    return;
+  }
+  document.getElementById("candHint").innerHTML = '<span class="ok">'+current.name+'</span>';
+  addLog("  4) Candidate survived the available tests. Decision = ACCEPT");
+  addLog("  5) Reward is now more informative than outcome-only acceptance.");
+}
+newEpisode();
+</script>
+</body>
+</html>

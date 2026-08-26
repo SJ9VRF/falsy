@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 360">
+<rect width="560" height="360" rx="28" fill="#0b1020"/>
+<rect x="22" y="22" width="516" height="316" rx="24" fill="#11182b" stroke="#2b3552"/>
+<text x="42" y="62" fill="#56d8ff" font-size="16" font-family="Inter,Arial,sans-serif">TASK EXAMPLE</text>
+<text x="42" y="98" fill="#ffffff" font-size="30" font-weight="700" font-family="Inter,Arial,sans-serif">Example 1 · Shortcut Policy</text>
+<text x="42" y="146" fill="#dfe7f5" font-size="18" font-weight="700" font-family="Inter,Arial,sans-serif">Goal</text>
+<text x="42" y="172" fill="#a8b5cf" font-size="16" font-family="Inter,Arial,sans-serif">Check if the candidate really uses all task variables.</text>
+<text x="42" y="212" fill="#dfe7f5" font-size="18" font-weight="700" font-family="Inter,Arial,sans-serif">Initial state</text>
+<text x="42" y="238" fill="#a8b5cf" font-size="16" font-family="Inter,Arial,sans-serif">Observed task is solved correctly.</text>
+<text x="42" y="278" fill="#dfe7f5" font-size="18" font-weight="700" font-family="Inter,Arial,sans-serif">Sequence</text>
+<text x="42" y="304" fill="#a8b5cf" font-size="16" font-family="Inter,Arial,sans-serif">Perturb one variable → replay candidate → compare outputs.</text>
+<text x="42" y="344" fill="#dfe7f5" font-size="18" font-weight="700" font-family="Inter,Arial,sans-serif">Success condition</text>
+<text x="42" y="370" fill="#a8b5cf" font-size="16" font-family="Inter,Arial,sans-serif">Faithful candidate adapts; shortcut candidate breaks.</text>
+<circle cx="464" cy="98" r="42" fill="#56d8ff" fill-opacity=".12" stroke="#56d8ff"/>
+<text x="447" y="106" fill="#56d8ff" font-size="28" font-family="Inter,Arial,sans-serif">→</text>
+</svg>
